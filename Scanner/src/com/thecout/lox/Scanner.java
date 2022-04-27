@@ -35,8 +35,12 @@ public class Scanner {
             newToken = getToken(temp, lineNumber);
 
             // reading the line any further is worthless
-            if(isComment)
+            if(isComment){
+                token = new Token(TokenType.COMMENT, temp, temp, lineNumber);
+                returnToken.add(token);
                 break;
+            }
+
 
             // bei temp = "12." kackt er ab, deshalb diese IF
             if(token != null && token.type == TokenType.NUMBER && newToken == null && chars[i] == '.'){
