@@ -35,7 +35,7 @@ public class Scanner {
             newToken = getToken(temp, lineNumber);
 
             // reading the line any further is worthless
-            if(isComment){
+            if(newToken == null && isComment){
                 token = new Token(TokenType.COMMENT, temp, temp, lineNumber);
                 returnToken.add(token);
                 break;
@@ -50,6 +50,7 @@ public class Scanner {
 
             // if new token is null -> the last token was the greatest possible match -> add last token
             if(newToken == null && token != null){
+                token.idx = i;
                 returnToken.add(token);
                 temp = "";
 
@@ -60,6 +61,7 @@ public class Scanner {
 
             //on end of line:
             if(i == chars.length - 1 && newToken != null){
+                newToken.idx = i;
                 returnToken.add(newToken);
             }
 
@@ -74,7 +76,7 @@ public class Scanner {
 
         Token token;
 
-        if(temp == "//") {
+        if(temp.equals("//")) {
             isComment = true;
             return null;
         }
@@ -206,10 +208,18 @@ public class Scanner {
     public List<Token> scan() {
         String[] lines = source.split("\n");
         for (int i = 0; i < lines.length; i++) {
-            tokens.addAll(scanLine(lines[i], i));
+            tokens.addAll(scanLine(removeWhitespace(lines[i]), i+1));
         }
         tokens.add(new Token(EOF, "", "", lines.length));
+
+        // TODO: How do you handle comments???
+        tokens.removeIf(t -> t.type == TokenType.COMMENT);
+
         return tokens;
+    }
+
+    private String removeWhitespace(String line){
+        return line.trim().replaceAll("\\s+", " ");
     }
 
 }

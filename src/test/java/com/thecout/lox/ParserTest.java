@@ -14,7 +14,31 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 public class ParserTest {
     static final String program = """
             fun printSum(a,b) {
-            print a+b;
+                print a+b;
+                var x;
+                var z = 2 * 3 + 4; // punkt vor strich sollte klappen
+                
+                for(var y = 0;y<3 and y>-1;y=y+1){
+                    if(y==2){
+                        return false;
+                    }
+                    else
+                        x = 10-5 == 5 or -(-5*2) == 7;
+                }
+                printSum(x+1,y/2);
+                
+                fun innerFunction(){
+                    print "i am an inner function";
+                }
+                
+                var text = "hello world";
+                
+                print text + "!";;;;;;;
+                
+                {
+                    var privateVar = 69;
+                }
+                
             }
             print 25+60;
             """;
