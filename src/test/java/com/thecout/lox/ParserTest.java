@@ -31,6 +31,8 @@ public class ParserTest {
                     print "i am an inner function";
                 }
                 
+                call();
+                
                 var text = "hello world";
                 
                 print text + "!";;;;;;;
