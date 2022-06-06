@@ -3,12 +3,13 @@ package com.thecout.lox.Traversal;
 
 import com.thecout.lox.Parser.Expr.*;
 import com.thecout.lox.Parser.Stmts.*;
-import com.thecout.lox.Traversal.InterpreterUtils.Environment;
-import com.thecout.lox.Traversal.InterpreterUtils.LoxCallable;
-import com.thecout.lox.Traversal.InterpreterUtils.LoxReturn;
-import com.thecout.lox.Traversal.InterpreterUtils.RuntimeError;
+import com.thecout.lox.Token;
+import com.thecout.lox.Traversal.InterpreterUtils.*;
 
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
+import java.util.stream.Collectors;
 
 public class Interpreter implements ExprVisitor<Object>, StmtVisitor<Void> {
 
@@ -70,17 +71,44 @@ public class Interpreter implements ExprVisitor<Object>, StmtVisitor<Void> {
 
     @Override
     public Object visitAssignExpr(Assign expr) {
-        return null;
+        if(expr.name != null)
+            this.environment.assign(expr.name, evaluate(expr.value));
+        else
+            evaluate(expr.value);
+
+        return evaluate(expr.value);
     }
 
     @Override
     public Object visitBinaryExpr(Binary expr) {
-        return null;
+
+        return switch (expr.operator.type) {
+            case BANG_EQUAL -> evaluate(expr.left) != evaluate(expr.right);
+            case EQUAL_EQUAL -> evaluate(expr.left) == evaluate(expr.right);
+            case GREATER -> (double) evaluate(expr.left) > (double) evaluate(expr.right);
+            case GREATER_EQUAL -> (double) evaluate(expr.left) >= (double) evaluate(expr.right);
+            case LESS -> (double) evaluate(expr.left) < (double) evaluate(expr.right);
+            case LESS_EQUAL -> (double) evaluate(expr.left) <= (double) evaluate(expr.right);
+            case PLUS -> (double) evaluate(expr.left) + (double) evaluate(expr.right);
+            case MINUS -> (double) evaluate(expr.left) - (double) evaluate(expr.right);
+            case STAR -> (double) evaluate(expr.left) * (double) evaluate(expr.right);
+            case SLASH -> (double) evaluate(expr.left) / (double) evaluate(expr.right);
+            default -> null;
+        };
     }
 
     @Override
     public Object visitCallExpr(Call expr) {
-        return null;
+
+        Object obj = evaluate(expr.callee);
+
+        if(obj instanceof LoxCallable)
+            return ((LoxCallable)obj).call(this, new ArrayList<Object>(expr.arguments));
+
+        if(obj instanceof Expr)
+            return evaluate((Expr) obj);
+
+        return obj;
     }
 
     @Override
@@ -90,17 +118,25 @@ public class Interpreter implements ExprVisitor<Object>, StmtVisitor<Void> {
 
     @Override
     public Object visitLiteralExpr(Literal expr) {
-        return null;
+        return expr.value;
     }
 
     @Override
     public Object visitLogicalExpr(Logical expr) {
-        return null;
+
+        return switch (expr.operator.type) {
+            case OR -> (boolean) evaluate(expr.left) || (boolean) evaluate(expr.right);
+            case AND -> (boolean) evaluate(expr.left) && (boolean) evaluate(expr.right);
+            default -> null;
+        };
     }
 
     @Override
     public Object visitUnaryExpr(Unary expr) {
         Object right = evaluate(expr.right);
+
+        if(expr.operator == null)
+            return evaluate(expr.right);
 
         return switch (expr.operator.type) {
             case BANG -> !(boolean) right;
@@ -114,23 +150,39 @@ public class Interpreter implements ExprVisitor<Object>, StmtVisitor<Void> {
         return environment.get(expr.name);
     }
 
+
+
+
+
+
+
+
     @Override
     public Void visitBlockStmt(Block stmt) {
+        executeBlock(stmt.statements, new Environment(this.environment));
+
         return null;
     }
 
     @Override
     public Void visitExpressionStmt(Expression stmt) {
+        evaluate(stmt.expression);
         return null;
     }
 
     @Override
     public Void visitFunctionStmt(Function stmt) {
+        this.environment.define(
+                stmt.name.lexeme,
+                new LoxFunction(stmt, this.environment)
+        );
+
         return null;
     }
 
     @Override
     public Void visitIfStmt(If stmt) {
+
         if((boolean) evaluate(stmt.condition))
             execute(stmt.thenBranch);
         else if(stmt.elseBranch != null)
@@ -141,7 +193,7 @@ public class Interpreter implements ExprVisitor<Object>, StmtVisitor<Void> {
 
     @Override
     public Void visitPrintStmt(Print stmt) {
-        System.out.println(stmt.expression.print());
+        System.out.println(evaluate(stmt.expression));
 
         return null;
     }
@@ -158,11 +210,15 @@ public class Interpreter implements ExprVisitor<Object>, StmtVisitor<Void> {
 
     @Override
     public Void visitVarStmt(Var stmt) {
+        this.environment.define(stmt.name.lexeme, stmt.initializer);
         return null;
     }
 
     @Override
     public Void visitWhileStmt(While stmt) {
+        while ((boolean) evaluate(stmt.condition)) {
+            execute(stmt.body);
+        }
         return null;
     }
 
