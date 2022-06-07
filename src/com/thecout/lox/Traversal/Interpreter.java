@@ -193,7 +193,13 @@ public class Interpreter implements ExprVisitor<Object>, StmtVisitor<Void> {
 
     @Override
     public Void visitPrintStmt(Print stmt) {
-        System.out.println(evaluate(stmt.expression));
+
+        Object obj = evaluate(stmt.expression);
+
+        if(obj instanceof Double && (double)obj - ((Double) obj).intValue() == 0)
+            obj = ((Double) obj).intValue();
+
+        System.out.println(obj);
 
         return null;
     }

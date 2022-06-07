@@ -15,17 +15,17 @@ public class AstPrinter implements ExprVisitor<String>, StmtVisitor<String> {
 
     @Override
     public String visitAssignExpr(Assign expr) {
-        return ("%s%s%s").formatted(expr.name, "=", expr.value);
+        return ("%s%s%s").formatted(expr.name, "=", print(expr.value));
     }
 
     @Override
     public String visitBinaryExpr(Binary expr) {
-        return null;
+        return ("%s%s%s").formatted(print(expr.left), expr.operator, print(expr.right));
     }
 
     @Override
     public String visitCallExpr(Call expr) {
-        return null;
+        return ("%s (%s)").formatted(print(expr), expr.arguments);
     }
 
     @Override
